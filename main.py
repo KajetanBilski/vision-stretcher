@@ -7,7 +7,8 @@ from detectron2.data import MetadataCatalog
 
 UNSTRETCHABLE_CLASSES = [
     'person',
-    'cow'
+    'cow',
+    'car'
 ]
 
 def get_classes():
