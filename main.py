@@ -1,3 +1,4 @@
+from typing import Tuple
 import numpy as np
 from seam_carving import seam_carve
 from detectron2 import model_zoo
@@ -7,8 +8,14 @@ from detectron2.data import MetadataCatalog
 
 UNSTRETCHABLE_CLASSES = [
     'person',
+    'bicycle',
+    'car',
+    'motorcycle',
+    'airplane',
+    'bus',
+    'train',
+    'truck',
     'cow',
-    'car'
 ]
 
 def get_classes():
@@ -17,7 +24,7 @@ def get_classes():
     cfg.MODEL.WEIGHTS = model_zoo.get_checkpoint_url("COCO-InstanceSegmentation/mask_rcnn_R_50_FPN_3x.yaml")
     return MetadataCatalog.get(cfg.DATASETS.TRAIN[0]).thing_classes
 
-def init_detectron():
+def init_detectron() -> Tuple[DefaultPredictor, set]:
     cfg = get_cfg()
     cfg.merge_from_file(model_zoo.get_config_file("COCO-InstanceSegmentation/mask_rcnn_R_50_FPN_3x.yaml"))
     cfg.MODEL.WEIGHTS = model_zoo.get_checkpoint_url("COCO-InstanceSegmentation/mask_rcnn_R_50_FPN_3x.yaml")
@@ -28,7 +35,7 @@ def init_detectron():
     for i in UNSTRETCHABLE_CLASSES:
         classes_of_interest.append(metadata.thing_classes.index(i))
     
-    return predictor, classes_of_interest
+    return predictor, set(classes_of_interest)
 
 def create_mask(predictor, masking_classes, img):
     outputs = predictor(img)

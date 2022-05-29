@@ -129,3 +129,4 @@ dmypy.json
 .pyre/
 
 data/
+train_256_places365standard.tar
