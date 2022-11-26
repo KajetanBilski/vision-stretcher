@@ -62,7 +62,7 @@ def backward_energy(im):
 
     return grad_mag
 
-@jit
+@jit(forceobj=True)
 def forward_energy(im):
     """
     Forward energy algorithm as described in "Improved Seam Carving for Video Retargeting"
@@ -156,18 +156,18 @@ def add_seam_grayscale(im, seam_idx):
 
     return output
 
-@jit
+@jit(forceobj=True)
 def remove_seam(im, boolmask):
     h, w = im.shape[:2]
     boolmask3c = np.stack([boolmask] * 3, axis=2)
     return im[boolmask3c].reshape((h, w - 1, 3))
 
-@jit
+@jit(forceobj=True)
 def remove_seam_grayscale(im, boolmask):
     h, w = im.shape[:2]
     return im[boolmask].reshape((h, w - 1))
 
-@jit
+@jit(forceobj=True)
 def get_minimum_seam(im, mask=None, remove_mask=None):
     """
     DP algorithm for finding the seam of minimum energy. Code adapted from 
