@@ -1,4 +1,5 @@
-
+import cv2
+import numpy as np
 
 def crop_image(img):
     minx, miny, maxx, maxy = 0, 0, img.shape[1], img.shape[0]
@@ -17,4 +18,8 @@ def foreground_score(src_img, rec_img, predictor, coi):
     src_masks, rec_masks = src_outs['instances'].pred_masks.cpu().numpy(), rec_outs['instances'].pred_masks.cpu().numpy()
     if len(src_masks) != len(rec_masks):
         return 0.
-    
+    for i in len(src_masks):
+        src_mask, rec_mask = crop_image(src_masks[i]), crop_image(rec_masks[i])
+        rec_mask = cv2.resize(rec_mask.astype(np.uint8) * 255, src_mask.shape[::-1])
+        _, rec_mask = cv2.threshold(rec_mask, None, 255, cv2.THRESH_OTSU)
+        
