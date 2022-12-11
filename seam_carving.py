@@ -168,7 +168,7 @@ def remove_seam_grayscale(im, boolmask):
     return im[boolmask].reshape((h, w - 1))
 
 @jit(forceobj=True)
-def get_minimum_seam(im, mask=None, remove_mask=None):
+def get_minimum_seam(im, mask=None, remove_mask=None, tracking_mask=False):
     """
     DP algorithm for finding the seam of minimum energy. Code adapted from 
     https://karthikkaranth.me/blog/implementing-seam-carving-with-python/
@@ -177,7 +177,7 @@ def get_minimum_seam(im, mask=None, remove_mask=None):
     energyfn = forward_energy if USE_FORWARD_ENERGY else backward_energy
     M = energyfn(im)
 
-    if mask is not None:
+    if mask is not None and not tracking_mask:
         M[np.where(mask > MASK_THRESHOLD)] = ENERGY_MASK_CONST
 
     # give removal mask priority over protective mask by using larger negative value
@@ -216,9 +216,9 @@ def get_minimum_seam(im, mask=None, remove_mask=None):
 # MAIN ALGORITHM
 ######################################## 
 
-def seams_removal(im, num_remove, mask=None, vis=False, rot=False):
+def seams_removal(im, num_remove, mask=None, vis=False, rot=False, tracking_mask=False):
     for _ in range(num_remove):
-        seam_idx, boolmask = get_minimum_seam(im, mask)
+        seam_idx, boolmask = get_minimum_seam(im, mask, tracking_mask=tracking_mask)
         if vis:
             visualize(im, boolmask, rotate=rot)
         im = remove_seam(im, boolmask)
@@ -227,13 +227,13 @@ def seams_removal(im, num_remove, mask=None, vis=False, rot=False):
     return im, mask
 
 
-def seams_insertion(im, num_add, mask=None, vis=False, rot=False):
+def seams_insertion(im, num_add, mask=None, vis=False, rot=False, tracking_mask=False):
     seams_record = []
     temp_im = im.copy()
     temp_mask = mask.copy() if mask is not None else None
 
     for _ in range(num_add):
-        seam_idx, boolmask = get_minimum_seam(temp_im, temp_mask)
+        seam_idx, boolmask = get_minimum_seam(temp_im, temp_mask, tracking_mask=tracking_mask)
         if vis:
             visualize(temp_im, boolmask, rotate=rot)
 
@@ -262,7 +262,7 @@ def seams_insertion(im, num_add, mask=None, vis=False, rot=False):
 # MAIN DRIVER FUNCTIONS
 ########################################
 
-def seam_carve(im, dy, dx, mask=None, vis=False):
+def seam_carve(im, dy, dx, mask=None, vis=False, tracking_mask=False):
     im = im.astype(np.float64)
     h, w = im.shape[:2]
     assert h + dy > 0 and w + dx > 0 and dy <= h and dx <= w
@@ -273,23 +273,23 @@ def seam_carve(im, dy, dx, mask=None, vis=False):
     output = im
 
     if dx < 0:
-        output, mask = seams_removal(output, -dx, mask, vis)
+        output, mask = seams_removal(output, -dx, mask, vis, tracking_mask=tracking_mask)
 
     elif dx > 0:
-        output, mask = seams_insertion(output, dx, mask, vis)
+        output, mask = seams_insertion(output, dx, mask, vis, tracking_mask=tracking_mask)
 
     if dy < 0:
         output = rotate_image(output, True)
         if mask is not None:
             mask = rotate_image(mask, True)
-        output, mask = seams_removal(output, -dy, mask, vis, rot=True)
+        output, mask = seams_removal(output, -dy, mask, vis, rot=True, tracking_mask=tracking_mask)
         output = rotate_image(output, False)
 
     elif dy > 0:
         output = rotate_image(output, True)
         if mask is not None:
             mask = rotate_image(mask, True)
-        output, mask = seams_insertion(output, dy, mask, vis, rot=True)
+        output, mask = seams_insertion(output, dy, mask, vis, rot=True, tracking_mask=tracking_mask)
         output = rotate_image(output, False)
 
     return output, mask

@@ -30,7 +30,7 @@ def init_detectron(unstretchables: List = None) -> Tuple[DefaultPredictor, set]:
 
     cfg = get_cfg()
     cfg.merge_from_file(model_zoo.get_config_file("COCO-InstanceSegmentation/mask_rcnn_R_50_FPN_3x.yaml"))
-    cfg.MODEL.ROI_HEADS.SCORE_THRESH_TEST = 0.9
+    cfg.MODEL.ROI_HEADS.SCORE_THRESH_TEST = 0.8
     cfg.MODEL.WEIGHTS = model_zoo.get_checkpoint_url("COCO-InstanceSegmentation/mask_rcnn_R_50_FPN_3x.yaml")
     predictor = DefaultPredictor(cfg)
 
@@ -50,11 +50,11 @@ def create_mask(predictor, masking_classes, img):
             mask |= masks[i]
     return mask.astype(np.uint8) * 255
 
-def resize(img, target_dims, mask = None):
-    return seam_carve(img, target_dims[0] - img.shape[0], target_dims[1] - img.shape[1], mask)[0]
+def resize(img, target_dims, mask = None, tracking_mask = False):
+    return seam_carve(img, target_dims[0] - img.shape[0], target_dims[1] - img.shape[1], mask, tracking_mask=tracking_mask)
 
 def pipeline(image, target_dims):
     predictor, coi = init_detectron()
     mask = create_mask(predictor, coi, image)
-    output = resize(image, target_dims, mask)
+    output, _ = resize(image, target_dims, mask)
     return output
