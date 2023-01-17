@@ -1,6 +1,7 @@
 from skimage.measure import label
 import numpy as np
 from sklearn.metrics import jaccard_score
+from main import seam_carve, create_mask
 
 def crop_image(img):
     minx, miny, maxx, maxy = 0, 0, img.shape[1], img.shape[0]
@@ -27,13 +28,23 @@ def foreground_score(src_mask, rec_mask):
     src_bin, rec_bin = src_mask >= .5, rec_mask >= .5
     src_img, rec_img = label(src_bin.astype(int), connectivity=2), label(rec_bin.astype(int), connectivity=2)
     if src_img.max() != rec_img.max():
-        return np.nan
+        return 0.
     scores = []
     weights = []
     for i in range(1, src_img.max() + 1):
         src_object, rec_object = crop_image(src_img == i), crop_image(rec_img == i)
         src_object, rec_object = unify_sizes(src_object, rec_object)
-        print(src_object.shape, rec_object.shape)
         scores.append(jaccard_score(src_object, rec_object, average="micro"))
         weights.append(np.sum(src_object))
+    if len(weights) == 0:
+        return 1.
     return np.average(scores, weights=weights)
+
+def test_for_image(img, target_dims, predictor, coi):
+    results = {}
+    mask = create_mask(predictor, coi, img)
+    output, new_mask = seam_carve(img, target_dims[0] - img.shape[0], target_dims[1] - img.shape[1], mask)
+    results['augmented'] = foreground_score(output, img, new_mask, mask)
+    output, _ = seam_carve(img, target_dims[0] - img.shape[0], target_dims[1] - img.shape[1])
+    results['default'] = foreground_score(output, img, new_mask, mask)
+    return results
