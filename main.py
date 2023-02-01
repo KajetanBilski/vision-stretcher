@@ -50,7 +50,7 @@ def create_mask(predictor, masking_classes, img):
             mask |= masks[i]
     return mask.astype(np.uint8) * 255
 
-def resize(img, target_dims, mask = None, tracking_mask = False):
+def recompose(img, target_dims, mask = None, tracking_mask = False):
     return seam_carve(img, target_dims[0] - img.shape[0], target_dims[1] - img.shape[1], mask, tracking_mask=tracking_mask)
 
 def pipeline(image, target_dims):

@@ -28,7 +28,6 @@ class OutpainterNet(nn.Module):
         return y
     
     def image_forward(self, img: torch.Tensor):
-        batch_size = img.shape[0]
         height = img.shape[2]
         img = img[...,-self.chunk_size:]
         img = pad(img, (0, 0, self.chunk_size, self.chunk_size))
